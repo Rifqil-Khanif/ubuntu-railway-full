@@ -1,7 +1,12 @@
 # Gunakan Ubuntu sebagai base image
 FROM ubuntu:latest
 
-# Update sistem dan install dependensi dasar
+# Set variabel environment untuk mencegah masalah locale
+ENV DEBIAN_FRONTEND=noninteractive \
+    LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8
+
+# Update sistem dan install dependensi dasar tanpa batasan
 RUN apt-get update && \
     apt-get upgrade -y && \
     apt-get install -y \
@@ -16,7 +21,11 @@ RUN apt-get update && \
     iproute2 \
     iputils-ping \
     dnsutils \
-    mc # Install Midnight Commander
+    mc \
+    nano \
+    unzip \
+    locales && \
+    locale-gen en_US.UTF-8
 
 # Tambahkan repository Node.js dan install Node.js v18 + npm
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && \
@@ -28,6 +37,13 @@ RUN npm install -g npm@latest pm2
 # Install ttyd (fungsi dari Dockerfile sebelumnya)
 RUN wget -qO /bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.3/ttyd.x86_64 && \
     chmod +x /bin/ttyd
+
+# Tambahkan file swap untuk menghindari OOM
+RUN fallocate -l 4G /swapfile && \
+    chmod 600 /swapfile && \
+    mkswap /swapfile && \
+    swapon /swapfile && \
+    echo '/swapfile none swap sw 0 0' >> /etc/fstab
 
 # Buat script untuk memantau CPU dan restart jika crash
 RUN echo '#!/bin/bash\n\
@@ -45,13 +61,10 @@ done' > /usr/local/bin/monitor-cpu && \
 RUN echo '#!/bin/bash\n\
 while true; do\n\
   echo "Membersihkan cache dan file sementara..." >&2\n\
-  # Hapus file cache npm dan apt\n\
   npm cache clean --force\n\
   apt-get clean\n\
   rm -rf /var/lib/apt/lists/*\n\
-  # Hapus file di /tmp\n\
   find /tmp -type f -exec rm -f {} +\n\
-  # Hapus file kosong di seluruh sistem\n\
   find / -type f -empty -exec rm -f {} +\n\
   echo "Pembersihan selesai." >&2\n\
   sleep 60\n\
