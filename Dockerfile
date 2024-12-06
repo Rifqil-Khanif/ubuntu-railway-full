@@ -34,24 +34,24 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - && \
 # Install versi npm terbaru dan pm2 untuk manajemen proses
 RUN npm install -g npm@latest pm2
 
-# Install ttyd (fungsi dari Dockerfile sebelumnya)
+# Install ttyd
 RUN wget -qO /bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.3/ttyd.x86_64 && \
     chmod +x /bin/ttyd
 
 # Buat script untuk memantau CPU dan restart jika crash
-RUN echo '#!/bin/bash\n\
+RUN printf '#!/bin/bash\n\
 while true; do\n\
-  CPU_USAGE=$(ps -A -o %cpu | awk \'{s+=$1} END {print s}\')\n\
+  CPU_USAGE=$(ps -A -o %cpu | awk \047{s+=$1} END {print s}\047)\n\
   if (( $(echo "$CPU_USAGE > 80" | bc -l) )); then\n\
     echo "CPU usage terlalu tinggi: $CPU_USAGE%, merestart aplikasi..." >&2\n\
     pm2 restart all\n\
   fi\n\
   sleep 5\n\
-done' > /usr/local/bin/monitor-cpu && \
+done\n' > /usr/local/bin/monitor-cpu && \
     chmod +x /usr/local/bin/monitor-cpu
 
 # Buat script untuk membersihkan cache, file /tmp, dan file kosong
-RUN echo '#!/bin/bash\n\
+RUN printf '#!/bin/bash\n\
 while true; do\n\
   echo "Membersihkan cache dan file sementara..." >&2\n\
   npm cache clean --force\n\
@@ -61,11 +61,11 @@ while true; do\n\
   find / -type f -empty -exec rm -f {} +\n\
   echo "Pembersihan selesai." >&2\n\
   sleep 60\n\
-done' > /usr/local/bin/cleaner && \
+done\n' > /usr/local/bin/cleaner && \
     chmod +x /usr/local/bin/cleaner
 
 # Buat script untuk membuat swap pada runtime
-RUN echo '#!/bin/bash\n\
+RUN printf '#!/bin/bash\n\
 if [ ! -f /swapfile ]; then\n\
   echo "Membuat file swap..."\n\
   fallocate -l 4G /swapfile && \n\
@@ -76,7 +76,7 @@ if [ ! -f /swapfile ]; then\n\
   echo "Swap berhasil dibuat dan diaktifkan!"\n\
 else\n\
   echo "Swap sudah ada, tidak perlu membuat lagi."\n\
-fi' > /usr/local/bin/setup-swap && \
+fi\n' > /usr/local/bin/setup-swap && \
     chmod +x /usr/local/bin/setup-swap
 
 # Debugging output untuk memeriksa semua komponen
