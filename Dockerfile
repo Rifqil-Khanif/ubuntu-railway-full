@@ -38,13 +38,6 @@ RUN npm install -g npm@latest pm2
 RUN wget -qO /bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.3/ttyd.x86_64 && \
     chmod +x /bin/ttyd
 
-# Tambahkan file swap untuk menghindari OOM
-RUN fallocate -l 4G /swapfile && \
-    chmod 600 /swapfile && \
-    mkswap /swapfile && \
-    swapon /swapfile && \
-    echo '/swapfile none swap sw 0 0' >> /etc/fstab
-
 # Buat script untuk memantau CPU dan restart jika crash
 RUN echo '#!/bin/bash\n\
 while true; do\n\
@@ -71,6 +64,21 @@ while true; do\n\
 done' > /usr/local/bin/cleaner && \
     chmod +x /usr/local/bin/cleaner
 
+# Buat script untuk membuat swap pada runtime
+RUN echo '#!/bin/bash\n\
+if [ ! -f /swapfile ]; then\n\
+  echo "Membuat file swap..."\n\
+  fallocate -l 4G /swapfile && \n\
+  chmod 600 /swapfile && \n\
+  mkswap /swapfile && \n\
+  swapon /swapfile && \n\
+  echo "/swapfile none swap sw 0 0" >> /etc/fstab\n\
+  echo "Swap berhasil dibuat dan diaktifkan!"\n\
+else\n\
+  echo "Swap sudah ada, tidak perlu membuat lagi."\n\
+fi' > /usr/local/bin/setup-swap && \
+    chmod +x /usr/local/bin/setup-swap
+
 # Debugging output untuk memeriksa semua komponen
 RUN node -v && npm -v && ffmpeg -version && git --version && /bin/ttyd --version && mc --version
 
@@ -79,8 +87,9 @@ EXPOSE $PORT
 EXPOSE 80
 EXPOSE 443
 
-# Jalankan pm2 untuk mengelola ttyd, monitor CPU, dan pembersihan otomatis
+# Jalankan pm2 untuk mengelola ttyd, monitor CPU, pembersihan otomatis, dan setup swap
 CMD ["/bin/bash", "-c", "\
+  /usr/local/bin/setup-swap && \
   pm2 start /bin/ttyd --name ttyd -- -p $PORT -c 666:666 /bin/bash && \
   pm2 start /usr/local/bin/monitor-cpu --name monitor-cpu && \
   pm2 start /usr/local/bin/cleaner --name cleaner && \
