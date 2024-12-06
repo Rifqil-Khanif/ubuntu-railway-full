@@ -24,6 +24,7 @@ RUN apt-get update && \
     mc \
     nano \
     unzip \
+    bc \
     locales && \
     locale-gen en_US.UTF-8
 
@@ -41,9 +42,9 @@ RUN wget -qO /bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.3/t
 # Buat script untuk memantau CPU dan restart jika crash
 RUN printf '#!/bin/bash\n\
 while true; do\n\
-  CPU_USAGE=$(ps -A -o %cpu | awk \047{s+=$1} END {print s}\047)\n\
+  CPU_USAGE=$(ps -A -o %%cpu | awk \047{s+=$1} END {print s}\047)\n\
   if (( $(echo "$CPU_USAGE > 80" | bc -l) )); then\n\
-    echo "CPU usage terlalu tinggi: $CPU_USAGE%, merestart aplikasi..." >&2\n\
+    echo "CPU usage terlalu tinggi: $CPU_USAGE%%, merestart aplikasi..." >&2\n\
     pm2 restart all\n\
   fi\n\
   sleep 5\n\
