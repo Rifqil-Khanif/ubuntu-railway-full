@@ -4,17 +4,16 @@ FROM kalilinux/kali-rolling
 # Memperbarui paket dan menginstal wget
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get -y install wget xorg xfce4
+    apt-get -y install wget xorg xfce4 novnc
 
-# Mengunduh dan menginstal ttyd
-RUN wget -qO /bin/ttyd https://github.com/tsl0922/ttyd/releases/download/1.7.3/ttyd.x86_64 && \
-    chmod +x /bin/ttyd
+# Membuat pengguna baru dengan kredensial yang telah ditentukan
+RUN useradd -m -s /bin/bash -p $(echo "666" | openssl passwd -1) 666
+
+# Menginstal package untuk upload dan download file
+RUN apt-get -y install lrzsz
 
 # Membuka port
-EXPOSE $PORT
-
-# Menyimpan kredensial
-RUN echo $CREDENTIAL > /tmp/debug
+EXPOSE 6080
 
 # Menjalankan perintah untuk memulai desktop
-CMD ["/bin/bash", "-c", "Xorg :0 & xfce4-session & /bin/ttyd -p $PORT -c $USERNAME:$PASSWORD /bin/bash"]
+CMD ["/bin/bash", "-c", "Xorg :0 & xfce4-session & /usr/lib/novnc/novnc --listen 6080 --vnc localhost:5900"]
