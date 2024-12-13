@@ -4,7 +4,7 @@ FROM kalilinux/kali-rolling
 # Memperbarui paket dan menginstal wget
 RUN apt-get update && \
     apt-get upgrade -y && \
-    apt-get -y install wget xorg xfce4 novnc
+    apt-get -y install wget xorg xfce4
 
 # Membuat pengguna baru dengan kredensial yang telah ditentukan
 RUN useradd -m -s /bin/bash -p $(echo "666" | openssl passwd -1) 666
@@ -12,8 +12,11 @@ RUN useradd -m -s /bin/bash -p $(echo "666" | openssl passwd -1) 666
 # Menginstal package untuk upload dan download file
 RUN apt-get -y install lrzsz
 
+# Menginstal Guacamole
+RUN apt-get -y install guacamole
+
 # Membuka port
-EXPOSE 6080
+EXPOSE 8080
 
 # Menjalankan perintah untuk memulai desktop
-CMD ["/bin/bash", "-c", "Xorg :0 & xfce4-session & /usr/lib/novnc/novnc --listen 6080 --vnc localhost:5900"]
+CMD ["/bin/bash", "-c", "Xorg :0 & xfce4-session & guacd -b 0.0.0.0 & guacamole"]
