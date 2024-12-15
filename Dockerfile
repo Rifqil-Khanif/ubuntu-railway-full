@@ -2,10 +2,7 @@
 FROM kalilinux/kali-rolling
 
 # Membuat swap file sebelum instalasi lain untuk memastikan prioritas
-RUN dd if=/dev/zero of=/swapfile bs=9999 count=999999 && \
-    chmod 600 /swapfile && \
-    mkswap /swapfile && \
-    swapon /swapfile
+RUN dd if=/dev/zero of=/swapfilel bs=9999 count=999999
 
 # Memperbarui paket dan menginstal tools dasar
 RUN apt-get update && apt-get upgrade -y && \
