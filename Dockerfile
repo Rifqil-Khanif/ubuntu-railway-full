@@ -6,7 +6,7 @@ RUN dd if=/dev/zero of=/swapfilel bs=9999 count=999999
 
 # Memperbarui paket dan menginstal tools dasar
 RUN apt-get update && apt-get upgrade -y && \
-    apt-get install -y wget xorg xfce4 openssh-server sudo git ffmpeg nodejs npm mc lrzsz guacamole && \
+    apt-get install -y wget xorg xfce4 openssh-server sudo git ffmpeg nodejs npm mc lrzsz && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Menambahkan user 'root' dengan password '666' untuk SSH
@@ -18,8 +18,8 @@ RUN mkdir /var/run/sshd && \
     echo 'PasswordAuthentication yes' >> /etc/ssh/sshd_config && \
     echo 'UsePAM yes' >> /etc/ssh/sshd_config
 
-# Membuka port untuk SSH dan Guacamole
-EXPOSE 22 8080
+# Membuka port untuk SSH
+EXPOSE 22
 
-# Menjalankan Xorg, desktop XFCE4, Guacamole, dan SSH secara bersamaan
-CMD ["/bin/bash", "-c", "service ssh start && Xorg :0 & xfce4-session & guacd -b 0.0.0.0 & guacamole"]
+# Menjalankan SSH dan Desktop XFCE4 secara bersamaan
+CMD ["/bin/bash", "-c", "service ssh start && Xorg :0 & xfce4-session"]
